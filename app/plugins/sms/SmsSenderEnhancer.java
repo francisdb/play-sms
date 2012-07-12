@@ -32,7 +32,7 @@ public class SmsSenderEnhancer extends Enhancer {
             return;
         }
         
-    	Logger.info("Enhancing " + applicationClass.name);
+    	Logger.trace("Enhancing SmsSender subtype " + applicationClass.name);
 
         for (final CtMethod ctMethod : ctClass.getDeclaredMethods()) {
 

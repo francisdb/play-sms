@@ -12,9 +12,16 @@ import java.util.concurrent.TimeoutException;
 
 import play.Logger;
 import play.Play;
+import play.exceptions.ConfigurationException;
 import play.exceptions.MailException;
 
 public class SMS {
+	
+	static final String SMS_MOCK = "sms.mock";
+	static final String SMS_PROVIDER = "sms.provider";
+	static final String SMS_SENDER_ID = "sms.senderId";
+	static final String SMS_PASSWORD = "sms.password";
+	static final String SMS_USERNAME = "sms.username";
 	
 	static ExecutorService executor = Executors.newCachedThreadPool();
 	public static boolean asynchronousSend = true;
@@ -23,7 +30,11 @@ public class SMS {
      * Send an email
      */
 	public static Future<Boolean> send(final SMSMessage sms) {
-		if (Play.configuration.getProperty("mycoolsms.mock", "false").equals("true") && Play.mode == Play.Mode.DEV) {
+    	if(sms.number == null || sms.number.length() == 0){
+    		throw new RuntimeException("number == [" + sms.number + "]");
+    	}
+		
+		if (Play.configuration.getProperty(SMS_MOCK, "false").equals("true") && Play.mode == Play.Mode.DEV) {
 			Mock.send(sms);
 			return new Future<Boolean>() {
 
@@ -59,13 +70,19 @@ public class SMS {
      * @param msg An Email message
      */
     public static Future<Boolean> sendMessage(final SMSMessage sms) {
+    	
+		
+		final String senderId = Play.configuration.getProperty(SMS_SENDER_ID);
+		final String provider = Play.configuration.getProperty(SMS_PROVIDER);
+		
+		final SmsService smsService = loadServiceForProvider(provider);
+    	
         if (asynchronousSend) {
             return executor.submit(new Callable<Boolean>() {
 
                 public Boolean call() {
                     try {
-                    	MyCoolSmsService service = new MyCoolSmsService();
-                    	service.sendSms(sms.number, sms.message);
+                    	smsService.sendSms(sms.number, sms.message, senderId);
                         return true;
                     } catch (Throwable e) {
                         MailException me = new MailException("Error while sending sms", e);
@@ -77,8 +94,7 @@ public class SMS {
         } else {
             final StringBuffer result = new StringBuffer();
             try {
-            	MyCoolSmsService service = new MyCoolSmsService();
-            	service.sendSms(sms.number, sms.message);
+            	smsService.sendSms(sms.number, sms.message, senderId);
             } catch (Throwable e) {
                 MailException me = new MailException("Error while sending sms", e);
                 Logger.error(me, "The sms has not been sent");
@@ -109,7 +125,15 @@ public class SMS {
         }
     }
     
-    public static class SMSMessage{
+    private static SmsService loadServiceForProvider(final String provider) {
+		if("mycoolsms".equals(provider)){
+			return new MyCoolSmsService();
+		}else{
+			throw new ConfigurationException("Unknown sms provider: [" + provider + "]");
+		}
+	}
+
+	public static class SMSMessage{
     	public final String number;
     	public final String message;
     	
@@ -147,5 +171,6 @@ public class SMS {
         	smses.clear();
         }
     }
+
 
 }

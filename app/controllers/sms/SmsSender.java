@@ -1,13 +1,12 @@
 package controllers.sms;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import play.Logger;
-import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesNamesTracer;
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSupport;
 import play.exceptions.UnexpectedException;
 import play.templates.Template;
@@ -29,7 +28,7 @@ public class SmsSender implements LocalVariablesSupport {
 	}
 	
     @SuppressWarnings("unchecked")
-	public static Future<Boolean> send(Object... args) {
+	public static Future<Boolean> send(final Map<String,Object> args) {
 		final HashMap<String, Object> map = getContext();
 
 		// Body character set
@@ -46,17 +45,13 @@ public class SmsSender implements LocalVariablesSupport {
 		templateName = templateName.replace(".", "/");
 
 		// overrides Template name
-		if (args.length > 0 && args[0] instanceof String && LocalVariablesNamesTracer.getAllLocalVariableNames(args[0]).isEmpty()) {
-			templateName = args[0].toString();
-		}
+//		if (args.size() > 0 && args[0] instanceof String && LocalVariablesNamesTracer.getAllLocalVariableNames(args[0]).isEmpty()) {
+//			templateName = args[0].toString();
+//		}
 
 		final Map<String, Object> templateTextBinding = new HashMap<String, Object>();
-		for (Object o : args) {
-			List<String> names = LocalVariablesNamesTracer.getAllLocalVariableNames(o);
-			for (String name : names) {
-				Logger.info(name + " = " + o);
-				templateTextBinding.put(name, o);
-			}
+		for (Entry<String,Object> entry : args.entrySet()) {
+			templateTextBinding.put(entry.getKey(), entry.getValue());
 		}
 
 		Template templateText = TemplateLoader.load(templateName + ".txt");
@@ -65,7 +60,7 @@ public class SmsSender implements LocalVariablesSupport {
 		return SMS.send(new SMSMessage(number, smsText));
 	}
 
-    public static boolean sendAndWait(Object... args) {
+    public static boolean sendAndWait(final Map<String,Object> args) {
         try {
             Future<Boolean> result = send(args);
             return result.get();
