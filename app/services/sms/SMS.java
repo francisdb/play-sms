@@ -19,7 +19,7 @@ public class SMS {
 	
 	static final String SMS_MOCK = "sms.mock";
 	static final String SMS_PROVIDER = "sms.provider";
-	static final String SMS_SENDER_ID = "sms.senderId";
+	static final String SMS_SENDER_ID = "sms.senderid";
 	static final String SMS_PASSWORD = "sms.password";
 	static final String SMS_USERNAME = "sms.username";
 	
@@ -30,7 +30,7 @@ public class SMS {
      * Send an email
      */
 	public static Future<Boolean> send(final SMSMessage sms) {
-    	if(sms.number == null || sms.number.length() == 0){
+    	if(sms.number == null || sms.number.trim().isEmpty()){
     		throw new RuntimeException("number == [" + sms.number + "]");
     	}
 		
@@ -69,7 +69,7 @@ public class SMS {
      *
      * @param msg An Email message
      */
-    public static Future<Boolean> sendMessage(final SMSMessage sms) {
+    private static Future<Boolean> sendMessage(final SMSMessage sms) {
     	
 		
 		final String senderId = Play.configuration.getProperty(SMS_SENDER_ID);

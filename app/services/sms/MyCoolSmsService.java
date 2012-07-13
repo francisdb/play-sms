@@ -92,6 +92,7 @@ public class MyCoolSmsService implements SmsService {
 	/**
 	 * @param number The cell phone number in international format. For example: 49123456789 or +49123456789 or 0049123456789	string
 	 * @param message The message body. My-Cool-SMS auto-detects the input encoding and processes the SMS accordingly as GSM or Unicode.
+	 * @param senderId The sender id to use or null for default
 	 * 
 	 * You can use the optional Unicode parameter to force a particular encoding. If Unicode is set to true the SMS will be sent as Unicode 
 	 * and the message parameter must be provided in Unicode UCS2 notation. If Unicode is set to false the SMS will be sent as GSM 
@@ -108,10 +109,10 @@ public class MyCoolSmsService implements SmsService {
 		
 		if(senderId != null && !senderId.trim().isEmpty()){
 			//senderid	Cell phone number in international format, for example: +44123456789 or alpha‐numeric sender id up to 11 characters, for example: Company
-			//requestBody.addProperty("senderid", "Company");
-			requestBody.addProperty("number", number);
-			requestBody.addProperty("message", message);
+			requestBody.addProperty("senderid", senderId);
 		}
+		requestBody.addProperty("number", number);
+		requestBody.addProperty("message", message);
 		
 		HttpResponse response = WS.url(ENDPOINT).body(requestBody).post();
 		Logger.debug("Response = > " + response.getString());
